@@ -71,3 +71,23 @@ class APIConnector:
             return (0, 0)
 
         return (lon, lat)
+
+    def RouteInfo(self, raw_route: str) -> list:
+        '''
+        To get the detailed route position(longtitude & latitude) from ETaGantry IDs
+
+        Args:
+            raw_route (str):
+                the original data in M06 records
+
+        Yields:
+            (list) [ date_time, (float, float) ]
+            list of time and positions(longtitude and latitude) of Gantrys
+        '''
+        route = [i.split('+') for i in raw_route.split('; ')]
+
+        for i in route:
+            i[0] = datetime.strptime(i[0], "%Y-%m-%d %H:%M:%S")
+            i[1] = self.GantryInfo(i[1])
+
+        return route
