@@ -8,6 +8,13 @@ import requests
 from pprint import pprint
 import json
 
+import os
+import pandas as pd
+import shutil
+from tqdm import tqdm
+from datetime import datetime
+from dateutil.rrule import rrule, DAILY
+
 class Auth():
 
     def __init__(self, app_id, app_key): 
@@ -31,7 +38,7 @@ class Auth():
 
 
 class APIConnector:
- 
+
     url_GantryInfo = "https://traffic.transportdata.tw/MOTC/v2/Road/Traffic/ETag/Freeway/"
     url_suf = "?$format=JSON"
 
@@ -91,3 +98,70 @@ class APIConnector:
             i[1] = self.GantryInfo(i[1])
 
         return route
+        
+class DfLoader:
+    #import subprocess
+    #import sys
+    #subprocess.check_call([sys.executable, "-m", "pip3", "install", "dload"])
+    
+    import dload
+    def single_get(self, name, date, sv_name):
+        to_get = f'https://tisvcloud.freeway.gov.tw/history/TDCS/{name}/{name}_{date}.tar.gz'
+        try:
+            tar_bytes = dload.bytes(to_get)
+            if (tar_bytes == b''): 
+                raise ValueError('Wrong (name,date) or server down!')
+            
+            with open('myfile.tar.gz', 'wb') as w:
+                w.write(tar_bytes)
+                
+            shutil.unpack_archive("myfile.tar.gz", f'extracted/{sv_name}')
+            os.remove('myfile.tar.gz')
+            
+        except Exception as ex:
+            print(f'Exception: {ex}')
+            
+    def download_data(self, name, start, end = None):
+        if (end == None) : end = start
+        
+        try:
+            a = datetime.strptime(start, '%Y%m%d')
+            b = datetime.strptime(end, '%Y%m%d')
+            for dt in rrule(DAILY, dtstart=a, until=b):
+                date = dt.strftime("%Y%m%d")
+                self.single_get(name, date, f'{start}_{end}')
+                
+        except Exception as ex:
+            print(f'Exception: {ex}')
+
+    def to_df(self, fpath, colnames):
+        csvs = []
+        days_folders = os.listdir(fpath)
+        
+        for day in days_folders :
+            P1 = os.path.join(fpath, day)
+            day_folder = os.listdir(P1)
+            
+            for time in day_folder :
+                P2 = os.path.join(P1, time)
+                time_folder = os.listdir(P2)
+
+                for csv_name in time_folder :
+                    csv_loc = os.path.join(P2, csv_name)
+                    csvs.append(csv_loc)
+
+        li = []
+        for csv_path in tqdm(csvs) :
+            df = pd.read_csv(csv_path, names=COL_NAMES)
+            li.append(df)
+
+        all_df = pd.concat(li, axis=0, ignore_index=True)
+        return all_df
+        
+    def get_df(self, name, start, end, col_name):
+        self.download_data(name, start, end)
+        f_name = f'{start}_{end}'
+        path = os.path.join("extracted/", f_name)
+        path = os.path.join(path, name)
+        
+        return self.to_df(path, col_name)
