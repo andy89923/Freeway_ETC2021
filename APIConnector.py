@@ -100,9 +100,6 @@ class APIConnector:
         return route
         
 class DfLoader:
-    #import subprocess
-    #import sys
-    #subprocess.check_call([sys.executable, "-m", "pip3", "install", "dload"])
     
     import dload
     def single_get(self, name, date, sv_name):
