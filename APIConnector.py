@@ -108,7 +108,7 @@ class DfLoader:
     def single_get(self, name, date, sv_name):
         to_get = f'https://tisvcloud.freeway.gov.tw/history/TDCS/{name}/{name}_{date}.tar.gz'
         try:
-            tar_bytes = dload.bytes(to_get)
+            tar_bytes = self.dload.bytes(to_get)
             if (tar_bytes == b''): 
                 raise ValueError('Wrong (name,date) or server down!')
             
