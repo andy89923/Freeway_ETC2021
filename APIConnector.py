@@ -137,11 +137,11 @@ class DfLoader:
         
         for day in days_folders :
             P1 = os.path.join(fpath, day)
-            day_folder = os.listdir(P1)
+            day_folder = sorted(os.listdir(P1))
             
             for time in day_folder :
                 P2 = os.path.join(P1, time)
-                time_folder = os.listdir(P2)
+                time_folder = sorted(os.listdir(P2))
 
                 for csv_name in time_folder :
                     csv_loc = os.path.join(P2, csv_name)
