@@ -99,6 +99,25 @@ class APIConnector:
 
         return route
         
+    def GantryName(self, ETagGantryID: str) -> str:
+        url =  self.url_GantryInfo + ETagGantryID + self.url_suf
+
+        headers = self.auth.get_auth_header()
+
+        r = requests.get(url, headers = self.auth.get_auth_header())
+        json_file = r.json()
+        
+        try:
+            rod_nam = json_file['ETags'][0]["RoadName"]
+            rod_sta = json_file['ETags'][0]["RoadSection"]["Start"]
+            rod_end = json_file['ETags'][0]["RoadSection"]["End"]
+        except:
+            print(ETagGantryID, "can't find match ID")
+            return "-1"
+
+        return f"{rod_nam} {rod_sta}-{rod_end}"
+
+
 class DfLoader:
     
     import dload
@@ -155,10 +174,19 @@ class DfLoader:
         all_df = pd.concat(li, axis=0, ignore_index=True)
         return all_df
         
-    def get_df(self, name, start, end, col_name):
+    def get_df(self, name, start, end, col_name = None):
         self.download_data(name, start, end)
+
         f_name = f'{start}_{end}'
         path = os.path.join("extracted/", f_name)
         path = os.path.join(path, name)
+
+        if col_name == None:
+            if name == "M03A": col_name = ['TimeInterval', 'GantryID', 'Direction', 'VehicleType', '交通量']
+            if name == "M04A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'TravelTime', '交通量']
+            if name == "M05A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'SpaceMeanSpeed', '交通量']
+            if name == "M06A": col_name = ['VehicleType', 'DetectionTime_O', 'GantryID_O', 'DetectionTime_D', 'GantryID_D', 'TripLength', 'TripEnd', 'TripInformation']
+            if name == "M07A": col_name = ['TimeInterval', 'GantryFrom', 'VehicleType', '旅次平均長度', '交通量']
+            if name == "M08A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', '交通量']
         
         return self.to_df(path, col_name)
