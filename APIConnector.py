@@ -120,8 +120,6 @@ class APIConnector:
 
 
 class DfLoader:
-    
-    import dload
     def single_get(self, name, date, sv_name):
         to_get = f'https://tisvcloud.freeway.gov.tw/history/TDCS/{name}/{name}_{date}.tar.gz'
 
@@ -161,31 +159,31 @@ class DfLoader:
 
         li = []
         for csv_path in tqdm(csvs) :
-            df = pd.read_csv(csv_path, names=COL_NAMES)
-            li.append(df)
+          df = pd.read_csv(csv_path, names=COL_NAMES)
+        li.append(df)
 
         all_df = pd.concat(li, axis=0, ignore_index=True)
         return all_df
         
     def get_df(self, name, start, end, col_name = None):
-		try:
-		    f_name = f'{start}_{end}'
-		    path = os.path.join("extracted/", f_name)
-		    path = os.path.join(path, name)
+        try:
+            f_name = f'{start}_{end}'
+            path = os.path.join("extracted/", f_name)
+            path = os.path.join(path, name)
 
-		    if col_name == None:
-		        if name == "M03A": col_name = ['TimeInterval', 'GantryID', 'Direction', 'VehicleType', '交通量']
-		        if name == "M04A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'TravelTime', '交通量']
-		        if name == "M05A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'SpaceMeanSpeed', '交通量']
-		        if name == "M06A": col_name = ['VehicleType', 'DetectionTime_O', 'GantryID_O', 'DetectionTime_D', 'GantryID_D', 'TripLength', 'TripEnd', 'TripInformation']
-		        if name == "M07A": col_name = ['TimeInterval', 'GantryFrom', 'VehicleType', '旅次平均長度', '交通量']
-		        if name == "M08A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', '交通量']
-		    
-		    if not os.path.isdir(path):
-		          self.download_data(name, start, end)
-		    
-		    df = self.to_df(path, col_name)
-		    return df
-		    
-		except Exception as ex:
-			print(f'Exception: {ex}')
+            if col_name == None:
+                if name == "M03A": col_name = ['TimeInterval', 'GantryID', 'Direction', 'VehicleType', '交通量']
+                if name == "M04A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'TravelTime', '交通量']
+                if name == "M05A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'SpaceMeanSpeed', '交通量']
+                if name == "M06A": col_name = ['VehicleType', 'DetectionTime_O', 'GantryID_O', 'DetectionTime_D', 'GantryID_D', 'TripLength', 'TripEnd', 'TripInformation']
+                if name == "M07A": col_name = ['TimeInterval', 'GantryFrom', 'VehicleType', '旅次平均長度', '交通量']
+                if name == "M08A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', '交通量']
+            
+            if not os.path.isdir(path):
+                  self.download_data(name, start, end)
+            
+            df = self.to_df(path, col_name)
+            return df
+            
+        except Exception as ex:
+            print(f'Exception: {ex}')
