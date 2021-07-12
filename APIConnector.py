@@ -159,7 +159,7 @@ class DfLoader:
 
         li = []
         for csv_path in tqdm(csvs) :
-          df = pd.read_csv(csv_path, names=COL_NAMES)
+          df = pd.read_csv(csv_path, names=colnames)
         li.append(df)
 
         all_df = pd.concat(li, axis=0, ignore_index=True)
