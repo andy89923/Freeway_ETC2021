@@ -14,6 +14,7 @@ import shutil
 from tqdm import tqdm
 from datetime import datetime
 from dateutil.rrule import rrule, DAILY
+import dload
 
 class Auth():
 
@@ -123,32 +124,24 @@ class DfLoader:
     import dload
     def single_get(self, name, date, sv_name):
         to_get = f'https://tisvcloud.freeway.gov.tw/history/TDCS/{name}/{name}_{date}.tar.gz'
-        try:
-            tar_bytes = self.dload.bytes(to_get)
-            if (tar_bytes == b''): 
-                raise ValueError('Wrong (name,date) or server down!')
+
+        tar_bytes = dload.bytes(to_get)
+        if (tar_bytes == b''): 
+            raise ValueError('Wrong (name,date) or server down!')
+        
+        with open('myfile.tar.gz', 'wb') as w:
+            w.write(tar_bytes)
             
-            with open('myfile.tar.gz', 'wb') as w:
-                w.write(tar_bytes)
-                
-            shutil.unpack_archive("myfile.tar.gz", f'extracted/{sv_name}')
-            os.remove('myfile.tar.gz')
-            
-        except Exception as ex:
-            print(f'Exception: {ex}')
+        shutil.unpack_archive("myfile.tar.gz", f'extracted/{sv_name}')
+        os.remove('myfile.tar.gz')
             
     def download_data(self, name, start, end = None):
-        if (end == None) : end = start
-        
-        try:
-            a = datetime.strptime(start, '%Y%m%d')
-            b = datetime.strptime(end, '%Y%m%d')
-            for dt in rrule(DAILY, dtstart=a, until=b):
-                date = dt.strftime("%Y%m%d")
-                self.single_get(name, date, f'{start}_{end}')
-                
-        except Exception as ex:
-            print(f'Exception: {ex}')
+        if (end == None): end = start
+        a = datetime.strptime(start, '%Y%m%d')
+        b = datetime.strptime(end, '%Y%m%d')
+        for dt in tqdm(rrule(DAILY, dtstart=a, until=b)):
+            date = dt.strftime("%Y%m%d")
+            self.single_get(name, date, f'{start}_{end}')
 
     def to_df(self, fpath, colnames):
         csvs = []
@@ -175,18 +168,24 @@ class DfLoader:
         return all_df
         
     def get_df(self, name, start, end, col_name = None):
-        self.download_data(name, start, end)
+		try:
+		    f_name = f'{start}_{end}'
+		    path = os.path.join("extracted/", f_name)
+		    path = os.path.join(path, name)
 
-        f_name = f'{start}_{end}'
-        path = os.path.join("extracted/", f_name)
-        path = os.path.join(path, name)
-
-        if col_name == None:
-            if name == "M03A": col_name = ['TimeInterval', 'GantryID', 'Direction', 'VehicleType', '交通量']
-            if name == "M04A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'TravelTime', '交通量']
-            if name == "M05A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'SpaceMeanSpeed', '交通量']
-            if name == "M06A": col_name = ['VehicleType', 'DetectionTime_O', 'GantryID_O', 'DetectionTime_D', 'GantryID_D', 'TripLength', 'TripEnd', 'TripInformation']
-            if name == "M07A": col_name = ['TimeInterval', 'GantryFrom', 'VehicleType', '旅次平均長度', '交通量']
-            if name == "M08A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', '交通量']
-        
-        return self.to_df(path, col_name)
+		    if col_name == None:
+		        if name == "M03A": col_name = ['TimeInterval', 'GantryID', 'Direction', 'VehicleType', '交通量']
+		        if name == "M04A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'TravelTime', '交通量']
+		        if name == "M05A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', 'SpaceMeanSpeed', '交通量']
+		        if name == "M06A": col_name = ['VehicleType', 'DetectionTime_O', 'GantryID_O', 'DetectionTime_D', 'GantryID_D', 'TripLength', 'TripEnd', 'TripInformation']
+		        if name == "M07A": col_name = ['TimeInterval', 'GantryFrom', 'VehicleType', '旅次平均長度', '交通量']
+		        if name == "M08A": col_name = ['TimeInterval', 'GantryFrom', 'GantryTo', 'VehicleType', '交通量']
+		    
+		    if not os.path.isdir(path):
+		          self.download_data(name, start, end)
+		    
+		    df = self.to_df(path, col_name)
+		    return df
+		    
+		except Exception as ex:
+			print(f'Exception: {ex}')
