@@ -118,6 +118,31 @@ class APIConnector:
 
         return f"{rod_nam} {rod_sta}-{rod_end}"
 
+    def GantryAllInfo(self, ETagGantryID: str) -> dict:
+        url =  self.url_GantryInfo + ETagGantryID + self.url_suf
+
+        headers = self.auth.get_auth_header()
+
+        r = requests.get(url, headers = self.auth.get_auth_header())
+        json_file = r.json()
+        
+        res = {}
+
+        try:
+            rod_nam = json_file['ETags'][0]["RoadName"]
+            rod_sta = json_file['ETags'][0]["RoadSection"]["Start"]
+            rod_end = json_file['ETags'][0]["RoadSection"]["End"]
+            
+            res['Name'] = f"{rod_nam} {rod_sta}-{rod_end}"
+            res['lat'] = json_file['ETags'][0]['PositionLat']
+            res['lon'] = json_file['ETags'][0]['PositionLon']
+            res['Mile'] = json_file['ETags'][0]['LocationMile']
+        except Exception as e:
+            print(ETagGantryID, "can't find match ID")
+            return { "Error" : e }
+
+        return res
+
 
 class DfLoader:
     def single_get(self, name, date, sv_name):
