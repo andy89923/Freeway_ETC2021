@@ -1,4 +1,5 @@
 *.DS_Store # MAC
+secret*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
